@@ -5,58 +5,119 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:YoloMarkNet"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="600" Width="800">
     <Window.DataContext>
         <local:MainWindowViewModel />
     </Window.DataContext>
     <Grid x:Name="grid">
         <Grid.RowDefinitions>
-            <RowDefinition Height="75" />
+            <RowDefinition Height="85" />
             <RowDefinition />
+            <RowDefinition Height="35" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="Black" BorderThickness="0,0,0,1">
-            <ItemsControl ItemsSource="{Binding Images}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border>
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="BorderBrush" Value="Black" />
-                                    <Setter Property="BorderThickness" Value="1" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="BorderBrush" Value="Yellow" />
-                                            <Setter Property="BorderThickness" Value="2" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <Button Command="{Binding DataContext.SelectImageCommand,ElementName=grid}" CommandParameter="{Binding}">
-                                <Image Source="{Binding Thumb}" Width="75" Height="75" Stretch="Uniform" StretchDirection="DownOnly" />
-                            </Button>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Images}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="Black" />
+                                        <Setter Property="BorderThickness" Value="1" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="BorderBrush" Value="Yellow" />
+                                                <Setter Property="BorderThickness" Value="2" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Button Command="{Binding DataContext.SelectImageCommand,ElementName=grid}" CommandParameter="{Binding}">
+                                    <Image Source="{Binding Thumb}" Width="75" Height="75" Stretch="Uniform" StretchDirection="DownOnly" />
+                                </Button>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
         </Border>
-        <Border Grid.Row="1" Grid.Column="0">
+        <Border Grid.Row="1" Grid.Column="0" Grid.RowSpan="2" BorderBrush="Black" BorderThickness="0,0,0,1">
             <ListBox ItemsSource="{Binding Classes}" SelectedItem="{Binding SelectedClass}" />
         </Border>
-        <Border Grid.Row="1" Grid.Column="1" BorderBrush="Black" BorderThickness="1,0,0,0" Background="Gray">
-            <Image Name="img" Source="{Binding SelectedImageSource}"
-                   MouseMove="Image_MouseMove"
-                   MouseLeftButtonDown="Image_MouseLeftButtonDown"
-                   MouseLeftButtonUp="Image_MouseLeftButtonUp"
-                   />
+        <Border Grid.Row="1" Grid.Column="1" BorderBrush="Black" BorderThickness="1,0,0,1" Background="Gray">
+            <Viewbox Stretch="Uniform" Cursor="Cross">
+                <Canvas Width="{Binding SelectedImageSource.Width}" Height="{Binding SelectedImageSource.Height}"
+                        MouseMove="Control_MouseMove"
+                        MouseLeftButtonDown="Control_MouseLeftButtonDown"
+                        MouseLeftButtonUp="Control_MouseLeftButtonUp"
+                        MouseLeave="Control_MouseLeave"
+                        >
+                    <ItemsControl ItemsSource="{Binding BoundingBoxes}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="{Binding Width}" Height="{Binding Height}">
+                                    <Grid> 
+                                        <Rectangle IsHitTestVisible="False" Fill="Green" Opacity="0.3" />
+                                        <TextBlock Padding="2" Margin="3,3,0,0" Text="{Binding ClassName}" FontSize="24" 
+                                                   Background="White" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                        <Button Background="Salmon" Padding="2" Margin="2" Content="r" FontFamily="Marlett" 
+                                                HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Arrow"
+                                                Command="{Binding DataContext.DeleteBoundingBoxCommand,ElementName=grid}" CommandParameter="{Binding}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Left" Value="{Binding X}" />
+                                <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                    </ItemsControl>
+                    <Image Panel.ZIndex="-1" Name="img" Source="{Binding SelectedImageSource}" />
+                    <Rectangle IsHitTestVisible="False" Fill="Yellow" Opacity="0.5" Canvas.Left="{Binding Ghost.X}" Canvas.Top="{Binding Ghost.Y}" Width="{Binding Ghost.Width}" Height="{Binding Ghost.Height}">
+                        <Rectangle.Style>
+                            <Style TargetType="Rectangle">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsMouseDown}" Value="True"> 
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Rectangle.Style>
+                    </Rectangle>
+                </Canvas>
+            </Viewbox>
+        </Border>
+        <Border Grid.Row="2" Grid.Column="1">
+            <Button HorizontalAlignment="Right" Margin="5" Padding="10,0" Background="PaleGreen" Command="{Binding SaveCommand}">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Content" Value="Next Image" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsLastImage}" Value="True">
+                                <Setter Property="Content" Value="Save &amp; Close" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
         </Border>
     </Grid>
 </Window>

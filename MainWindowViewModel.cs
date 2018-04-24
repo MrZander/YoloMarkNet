@@ -55,8 +55,9 @@ namespace YoloMarkNet
 
     public class BoundingBox : Notifier
     {
-        public BoundingBox(Rect rect) { this.rect = rect; }
+        public BoundingBox(Rect rect, string className) { this.rect = rect; ClassName = className; }
         private Rect rect;
+        public string ClassName { get; }
         public double X
         {
             get { return rect.X; }
@@ -100,41 +101,34 @@ namespace YoloMarkNet
 
         private ImageSource _selectedImageSource;
         private string _selectedClass;
-        private double _mouseX;
-        private double _mouseY;
         private bool _isMouseDown;
-
+        private Rect _ghost;
+       
+        public Rect Ghost
+        {
+            get { return _ghost; }
+            set { _ghost = value; NotifyPropertyChanged(); }
+        }
         public bool IsMouseDown
         {
             get { return _isMouseDown; }
             set { _isMouseDown = value; NotifyPropertyChanged(); }
         }
 
-        public double MouseY
-        {
-            get { return _mouseY; }
-            set { _mouseY = value; NotifyPropertyChanged(); }
-        }
+        public IList<string> Classes { get; }
 
-        public double MouseX
-        {
-            get { return _mouseX; }
-            set { _mouseX = value; NotifyPropertyChanged(); }
-        }
-
-        public IEnumerable<string> Classes { get; }
-
-        public IEnumerable<Image> Images { get; }
+        public IList<Image> Images { get; }
 
         public ObservableCollection<BoundingBox> BoundingBoxes { get; } = new ObservableCollection<BoundingBox>();
 
+        public bool IsLastImage => SelectedImage == Images.Last();
         public Image SelectedImage
         {
             get { return Images.FirstOrDefault(f => f.IsSelected); }
             set
             {
                 SelectedImageSource = null;
-                foreach(var image in Images)
+                foreach (var image in Images)
                 {
                     if (image == value)
                     {
@@ -146,7 +140,25 @@ namespace YoloMarkNet
                         image.IsSelected = false;
                     }
                 }
+                BoundingBoxes.Clear();
+                var path = SelectedImage.Path.Substring(0, SelectedImage.Path.Length - 4) + ".txt";
+                if (File.Exists(path))
+                {
+                    var boundingBoxes = File.ReadAllLines(path);
+                    foreach (var bb in boundingBoxes) 
+                    {
+                        var split = bb.Split(' ');
+                        var x = double.Parse(split[1]) * SelectedImageSource.Width;
+                        var y = double.Parse(split[2]) * SelectedImageSource.Height;
+                        var w = double.Parse(split[3]) * SelectedImageSource.Width;
+                        var h = double.Parse(split[4]) * SelectedImageSource.Height;
+                        var classIdx = int.Parse(split[0]);
+                        var rect = new Rect(x, y, w, h);
+                        BoundingBoxes.Add(new BoundingBox(rect, Classes[classIdx]));
+                    }
+                }
                 NotifyPropertyChanged();
+                NotifyPropertyChanged(nameof(IsLastImage));
             }
         }
         
@@ -164,6 +176,8 @@ namespace YoloMarkNet
         
         public MainWindowViewModel()
         {
+
+            System.IO.Directory.CreateDirectory("data\\img");
 
             //Fix design time errors
             if (DesignerProperties.GetIsInDesignMode(new System.Windows.DependencyObject())) return;
@@ -186,7 +200,13 @@ namespace YoloMarkNet
                 Application.Current.MainWindow.Close();
                 return;
             }
-            if(Classes.Count() == 0)
+            var data = "";
+            foreach (var img in Images) data += $"{img.Path}{Environment.NewLine}";
+            File.WriteAllText("data\\train.txt", data);
+
+
+            SelectedClass = Classes.FirstOrDefault();
+            if(SelectedClass == null)
             {
                 MessageBox.Show("No classes found, please enter classes into data/obj.names");
                 Application.Current.MainWindow.Close();
@@ -215,15 +235,9 @@ namespace YoloMarkNet
 
         }
 
-        public ICommand SelectImageCommand => new Command(p =>
-        {
-            SelectedImage = (Image)p;
-        });
-
         public void MouseMove(Point point)
         {
-            MouseX = point.X;
-            MouseY = point.X;
+            Ghost = new Rect(mouseDownLocation, point);
         }
 
         private Point mouseDownLocation;
@@ -235,9 +249,58 @@ namespace YoloMarkNet
 
         public void MouseUp(Point point)
         {
+            if(IsMouseDown)
+            {
+                var rect = new Rect(mouseDownLocation, point);
+                BoundingBoxes.Add(new BoundingBox(rect, SelectedClass));
+            }
             IsMouseDown = false;
-            var rect = new Rect(mouseDownLocation, point);
-            BoundingBoxes.Add(new BoundingBox(rect));
+        }
+
+        public void MouseLeave()
+        {
+            IsMouseDown = false;
+        }
+
+        public ICommand SelectImageCommand => new Command(p =>
+        {
+            SaveCurrentImage();
+            SelectedImage = (Image)p;
+        });
+
+        public ICommand DeleteBoundingBoxCommand => new Command(p =>
+        {
+            BoundingBoxes.Remove((BoundingBox)p);
+        });
+
+        public ICommand SaveCommand => new Command(_ =>
+        {
+            SaveCurrentImage();
+            var currentImgIdx = Images.IndexOf(SelectedImage);
+            if (currentImgIdx < Images.Count - 1)
+            {
+                SelectedImage = Images[currentImgIdx + 1];
+            }
+            else
+            {
+                Application.Current.MainWindow.Close();
+            }
+        });
+
+        private void SaveCurrentImage()
+        {
+            var path = SelectedImage.Path.Substring(0, SelectedImage.Path.Length - 4) + ".txt";
+            var data = "";
+            foreach (var bb in BoundingBoxes)
+            {
+                var classIndex = Classes.IndexOf(bb.ClassName);
+                var scaledX = bb.X / SelectedImageSource.Width;
+                var scaledY = bb.Y / SelectedImageSource.Height;
+                var scaledWidth = bb.Width / SelectedImageSource.Width;
+                var scaledHeight = bb.Height / SelectedImageSource.Height;
+                data += $"{classIndex} {scaledX} {scaledY} {scaledWidth} {scaledHeight}{Environment.NewLine}";
+            }
+            File.WriteAllText(path, data);
         }
 
     }
