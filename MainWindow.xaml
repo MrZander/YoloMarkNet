@@ -9,6 +9,14 @@
     <Window.DataContext>
         <local:MainWindowViewModel />
     </Window.DataContext>
+    <Window.Resources>
+        <ControlTemplate x:Key="BoundingBoxControlTemplate" TargetType="ContentControl">
+            <Grid>
+                <local:BoundingThumb DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}" Cursor="SizeAll"/>
+                <ContentPresenter Content="{TemplateBinding ContentControl.Content}"/>
+            </Grid>
+        </ControlTemplate>
+    </Window.Resources>
     <Grid x:Name="grid">
         <Grid.RowDefinitions>
             <RowDefinition Height="85" />
@@ -71,13 +79,15 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Width="{Binding Width}" Height="{Binding Height}">
-                                    <Grid> 
-                                        <Rectangle IsHitTestVisible="False" Fill="Green" Opacity="0.3" />
-                                        <TextBlock Padding="2" Margin="3,3,0,0" Text="{Binding ClassName}" FontSize="24" 
-                                                   Background="White" HorizontalAlignment="Left" VerticalAlignment="Top" />
-                                        <Button Background="Salmon" Padding="2" Margin="2" Content="r" FontFamily="Marlett" 
-                                                HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Arrow"
-                                                Command="{Binding DataContext.DeleteBoundingBoxCommand,ElementName=grid}" CommandParameter="{Binding}" />
+                                    <Grid>
+                                        <Grid.ContextMenu>
+                                            <ContextMenu> 
+                                                <MenuItem Header="Delete" Command="{Binding DataContext.DeleteBoundingBoxCommand,ElementName=grid}" CommandParameter="{Binding}"/>
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
+                                        <ContentControl Template="{StaticResource BoundingBoxControlTemplate}">
+                                            <Rectangle IsHitTestVisible="False" Fill="Green" Opacity="0.3" />
+                                        </ContentControl>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
