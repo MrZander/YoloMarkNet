@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,33 +15,7 @@ using System.Windows.Media.Imaging;
 
 namespace YoloMarkNet
 {
-
-    public class Command : ICommand
-    {
-        public event EventHandler CanExecuteChanged;
-        Action<object> action;
-        public Command(Action<object> action)
-        {
-            this.action = action;
-        }
-        public bool CanExecute(object parameter)
-        {
-            return true;
-        }
-
-        public void Execute(object parameter)
-        {
-            action(parameter);
-        }
-    }
-
-    public class Notifier : INotifyPropertyChanged
-    {
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void NotifyPropertyChanged([CallerMemberName()]string propertyName = null) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)); }
-    }
-
+     
     public class Image : Notifier
     {
         private bool _isSelected;
@@ -55,9 +30,9 @@ namespace YoloMarkNet
 
     public class BoundingBox : Notifier
     {
-        public BoundingBox(Rect rect, string className) { this.rect = rect; ClassName = className; }
+        public BoundingBox(Rect rect, Class c) { this.rect = rect; Class = c; }
         private Rect rect;
-        public string ClassName { get; }
+        public Class Class { get; }
         public double X
         {
             get { return rect.X; }
@@ -96,11 +71,22 @@ namespace YoloMarkNet
         }
     }
 
+    public class Class
+    {
+        public Class(string desc, Brush color)
+        {
+            ClassDescriptor = desc;
+            Color = color;
+        }
+        public string ClassDescriptor { get; }
+        public Brush Color { get; }
+    }
+
     public class MainWindowViewModel : Notifier
     {
 
         private ImageSource _selectedImageSource;
-        private string _selectedClass;
+        private Class _selectedClass;
         private bool _isMouseDown;
         private Rect _ghost;
        
@@ -115,9 +101,11 @@ namespace YoloMarkNet
             set { _isMouseDown = value; NotifyPropertyChanged(); }
         }
 
-        public IList<string> Classes { get; }
+        public IList<Class> Classes { get; }
 
         public IList<Image> Images { get; }
+
+        public IList<Brush> Colors { get; } 
 
         public ObservableCollection<BoundingBox> BoundingBoxes { get; } = new ObservableCollection<BoundingBox>();
 
@@ -168,7 +156,7 @@ namespace YoloMarkNet
             set { _selectedImageSource = value; NotifyPropertyChanged(); }
         }
         
-        public string SelectedClass
+        public Class SelectedClass
         {
             get { return _selectedClass; }
             set { _selectedClass = value; NotifyPropertyChanged(); }
@@ -184,7 +172,7 @@ namespace YoloMarkNet
              
             Classes = System.IO.File.ReadAllText("data\\obj.names")
                                     .Split('\n')
-                                    .Select(f => f.Trim())
+                                    .Select(f => new Class(f.Trim(), GetPseudorandomBrush()))
                                     .ToList();
 
             Images = System.IO.Directory.GetFiles("data\\img", "*.jpg").Select(f => new Image()
@@ -213,6 +201,14 @@ namespace YoloMarkNet
                 return;
             }
 
+        }
+
+        static Random seededRandom = new Random(694201337);
+        private Brush GetPseudorandomBrush()
+        { 
+            var brushes = typeof(Brushes).GetProperties();
+            int random = seededRandom.Next(brushes.Length);
+            return (Brush)brushes[random].GetValue(null, null);
         }
 
         private ImageSource LoadImage(string path, bool thumb = false)
@@ -293,7 +289,7 @@ namespace YoloMarkNet
             var data = "";
             foreach (var bb in BoundingBoxes)
             {
-                var classIndex = Classes.IndexOf(bb.ClassName);
+                var classIndex = Classes.IndexOf(bb.Class);
                 var scaledX = bb.X / SelectedImageSource.Width;
                 var scaledY = bb.Y / SelectedImageSource.Height;
                 var scaledWidth = bb.Width / SelectedImageSource.Width;
