@@ -55,7 +55,16 @@
             </ScrollViewer>
         </Border>
         <Border Grid.Row="1" Grid.Column="0" Grid.RowSpan="2" BorderBrush="Black" BorderThickness="0,0,0,1">
-            <ListBox ItemsSource="{Binding Classes}" SelectedItem="{Binding SelectedClass}" />
+            <ListBox ItemsSource="{Binding Classes}" SelectedItem="{Binding SelectedClass}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <Border Margin="0,0,3,0" BorderBrush="Black" BorderThickness="1" Height="16" Width="16" Background="{Binding Color}" />
+                            <TextBlock Text="{Binding ClassDescriptor}" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </Border>
         <Border Grid.Row="1" Grid.Column="1" BorderBrush="Black" BorderThickness="1,0,0,1" Background="Gray">
             <Viewbox Stretch="Uniform" Cursor="Cross">
@@ -66,6 +75,17 @@
                         MouseLeave="Control_MouseLeave"
                         >
                     <ItemsControl ItemsSource="{Binding BoundingBoxes}">
+                        <ItemsControl.Resources>
+                            <Style TargetType="local:ResizeThumb">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate>
+                                            <Border BorderBrush="Black" BorderThickness="1" Background="{Binding DataContext.Class.Color, RelativeSource={RelativeSource AncestorType=Border}}"  />
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ItemsControl.Resources>
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <Canvas />
@@ -77,15 +97,21 @@
                                     <Grid Tag="{Binding}">
                                         <Grid.ContextMenu>
                                             <ContextMenu DataContext="">
-                                                <MenuItem Header="Delete" Command="{Binding DataContext.DeleteBoundingBoxCommand, Source={StaticResource Proxy}}" 
-                                                          CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Command="{Binding DataContext.DeleteBoundingBoxCommand, Source={StaticResource Proxy}}" 
+                                                          CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                                    <MenuItem.Header>
+                                                        <TextBlock>
+                                                            Delete <Run Text="{Binding PlacementTarget.Tag.Class.ClassDescriptor, RelativeSource={RelativeSource AncestorType=ContextMenu}, Mode=OneWay}" />
+                                                        </TextBlock>
+                                                    </MenuItem.Header>
+                                                </MenuItem>
                                             </ContextMenu>
                                         </Grid.ContextMenu>
                                         <local:BoundingThumb IsHitTestVisible="True" Background="Transparent" Cursor="SizeAll" 
                                                              DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}">
                                             <local:BoundingThumb.Template>
                                                 <ControlTemplate>
-                                                    <Rectangle Fill="Green" Opacity="0.3" />
+                                                    <Rectangle Fill="{Binding DataContext.Class.Color, RelativeSource={RelativeSource AncestorType=Border}}" Opacity="0.3" />
                                                 </ControlTemplate>
                                             </local:BoundingThumb.Template>
                                         </local:BoundingThumb>
