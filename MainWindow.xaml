@@ -10,6 +10,9 @@
         <local:MainWindowViewModel />
     </Window.DataContext>
     <Grid x:Name="grid">
+        <Grid.Resources> 
+            <local:DataContextProxy DataContext="{Binding}" x:Key="Proxy" />
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="85" />
             <RowDefinition />
@@ -70,22 +73,40 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="{Binding Width}" Height="{Binding Height}">
-                                    <Grid> 
-                                        <Rectangle IsHitTestVisible="False" Fill="Green" Opacity="0.3" />
-                                        <TextBlock Padding="2" Margin="3,3,0,0" Text="{Binding ClassName}" FontSize="24" 
-                                                   Background="White" HorizontalAlignment="Left" VerticalAlignment="Top" />
-                                        <Button Background="Salmon" Padding="2" Margin="2" Content="r" FontFamily="Marlett" 
-                                                HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Arrow"
-                                                Command="{Binding DataContext.DeleteBoundingBoxCommand,ElementName=grid}" CommandParameter="{Binding}" />
+                                <Border>
+                                    <Grid Tag="{Binding}">
+                                        <Grid.ContextMenu>
+                                            <ContextMenu DataContext="">
+                                                <MenuItem Header="Delete" Command="{Binding DataContext.DeleteBoundingBoxCommand, Source={StaticResource Proxy}}" 
+                                                          CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
+                                        <local:BoundingThumb IsHitTestVisible="True" Background="Transparent" Cursor="SizeAll" 
+                                                             DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}">
+                                            <local:BoundingThumb.Template>
+                                                <ControlTemplate>
+                                                    <Rectangle Fill="Green" Opacity="0.3" />
+                                                </ControlTemplate>
+                                            </local:BoundingThumb.Template>
+                                        </local:BoundingThumb>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Height="3" Cursor="SizeNS" Margin="0 -4 0 0" VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="3" Cursor="SizeWE" Margin="-4 0 0 0" VerticalAlignment="Stretch" HorizontalAlignment="Left"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="3" Cursor="SizeWE" Margin="0 0 -4 0" VerticalAlignment="Stretch" HorizontalAlignment="Right"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Height="3" Cursor="SizeNS" Margin="0 0 0 -4" VerticalAlignment="Bottom"  HorizontalAlignment="Stretch"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="7" Height="7" Cursor="SizeNWSE" Margin="-6 -6 0 0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="7" Height="7" Cursor="SizeNESW" Margin="0 -6 -6 0" VerticalAlignment="Top" HorizontalAlignment="Right"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="7" Height="7" Cursor="SizeNESW" Margin="-6 0 0 -6" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="7" Height="7" Cursor="SizeNWSE" Margin="0 0 -6 -6" VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                         <ItemsControl.ItemContainerStyle>
                             <Style TargetType="ContentPresenter">
-                                <Setter Property="Canvas.Left" Value="{Binding X}" />
-                                <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                                <Setter Property="Canvas.Left" Value="{Binding X, Mode=TwoWay}" />
+                                <Setter Property="Canvas.Top" Value="{Binding Y, Mode=TwoWay}" />
+                                <Setter Property="Height" Value="{Binding Height, Mode=TwoWay}" />
+                                <Setter Property="Width" Value="{Binding Width, Mode=TwoWay}" /> 
                             </Style>
                         </ItemsControl.ItemContainerStyle>
                     </ItemsControl>
