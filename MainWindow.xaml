@@ -73,7 +73,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="{Binding Width}" Height="{Binding Height}">
+                                <Border>
                                     <Grid Tag="{Binding}">
                                         <Grid.ContextMenu>
                                             <ContextMenu DataContext="">
@@ -85,12 +85,18 @@
                                                              DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}">
                                             <local:BoundingThumb.Template>
                                                 <ControlTemplate>
-                                                    <Border BorderBrush="Black" BorderThickness="1">
-                                                        <Rectangle Fill="Green" Opacity="0.3" />
-                                                    </Border>
+                                                    <Rectangle Fill="Green" Opacity="0.3" />
                                                 </ControlTemplate>
                                             </local:BoundingThumb.Template>
                                         </local:BoundingThumb>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Height="3" Cursor="SizeNS" Margin="0 -4 0 0" VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="3" Cursor="SizeWE" Margin="-4 0 0 0" VerticalAlignment="Stretch" HorizontalAlignment="Left"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="3" Cursor="SizeWE" Margin="0 0 -4 0" VerticalAlignment="Stretch" HorizontalAlignment="Right"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Height="3" Cursor="SizeNS" Margin="0 0 0 -4" VerticalAlignment="Bottom"  HorizontalAlignment="Stretch"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="7" Height="7" Cursor="SizeNWSE" Margin="-6 -6 0 0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="7" Height="7" Cursor="SizeNESW" Margin="0 -6 -6 0" VerticalAlignment="Top" HorizontalAlignment="Right"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="7" Height="7" Cursor="SizeNESW" Margin="-6 0 0 -6" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+                                        <local:ResizeThumb DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Width="7" Height="7" Cursor="SizeNWSE" Margin="0 0 -6 -6" VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -99,6 +105,8 @@
                             <Style TargetType="ContentPresenter">
                                 <Setter Property="Canvas.Left" Value="{Binding X, Mode=TwoWay}" />
                                 <Setter Property="Canvas.Top" Value="{Binding Y, Mode=TwoWay}" />
+                                <Setter Property="Height" Value="{Binding Height, Mode=TwoWay}" />
+                                <Setter Property="Width" Value="{Binding Width, Mode=TwoWay}" /> 
                             </Style>
                         </ItemsControl.ItemContainerStyle>
                     </ItemsControl>
