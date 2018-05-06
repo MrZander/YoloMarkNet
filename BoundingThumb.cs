@@ -20,7 +20,7 @@ namespace YoloMarkNet
 
         private void OnDragDelta(object sender, DragDeltaEventArgs e)
         {
-            var item = DataContext as Control;
+            var item = DataContext as ContentPresenter;
             if (item != null)
             {
                 double left = Canvas.GetLeft(item);

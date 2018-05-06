@@ -9,15 +9,10 @@
     <Window.DataContext>
         <local:MainWindowViewModel />
     </Window.DataContext>
-    <Window.Resources>
-        <ControlTemplate x:Key="BoundingBoxControlTemplate" TargetType="ContentControl">
-            <Grid>
-                <local:BoundingThumb DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}" Cursor="SizeAll"/>
-                <ContentPresenter Content="{TemplateBinding ContentControl.Content}"/>
-            </Grid>
-        </ControlTemplate>
-    </Window.Resources>
     <Grid x:Name="grid">
+        <Grid.Resources> 
+            <local:DataContextProxy DataContext="{Binding}" x:Key="Proxy" />
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="85" />
             <RowDefinition />
@@ -79,23 +74,31 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Width="{Binding Width}" Height="{Binding Height}">
-                                    <Grid>
+                                    <Grid Tag="{Binding}">
                                         <Grid.ContextMenu>
-                                            <ContextMenu> 
-                                                <MenuItem Header="Delete" Command="{Binding DataContext.DeleteBoundingBoxCommand,ElementName=grid}" CommandParameter="{Binding}"/>
+                                            <ContextMenu DataContext="">
+                                                <MenuItem Header="Delete" Command="{Binding DataContext.DeleteBoundingBoxCommand, Source={StaticResource Proxy}}" 
+                                                          CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             </ContextMenu>
                                         </Grid.ContextMenu>
-                                        <ContentControl Template="{StaticResource BoundingBoxControlTemplate}">
-                                            <Rectangle IsHitTestVisible="False" Fill="Green" Opacity="0.3" />
-                                        </ContentControl>
+                                        <local:BoundingThumb IsHitTestVisible="True" Background="Transparent" Cursor="SizeAll" 
+                                                             DataContext="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}}">
+                                            <local:BoundingThumb.Template>
+                                                <ControlTemplate>
+                                                    <Border BorderBrush="Black" BorderThickness="1">
+                                                        <Rectangle Fill="Green" Opacity="0.3" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </local:BoundingThumb.Template>
+                                        </local:BoundingThumb>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                         <ItemsControl.ItemContainerStyle>
                             <Style TargetType="ContentPresenter">
-                                <Setter Property="Canvas.Left" Value="{Binding X}" />
-                                <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                                <Setter Property="Canvas.Left" Value="{Binding X, Mode=TwoWay}" />
+                                <Setter Property="Canvas.Top" Value="{Binding Y, Mode=TwoWay}" />
                             </Style>
                         </ItemsControl.ItemContainerStyle>
                     </ItemsControl>
